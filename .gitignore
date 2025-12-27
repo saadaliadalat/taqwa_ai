@@ -25,7 +25,17 @@ Thumbs.db
 *.log
 npm-debug.log*
 
-# Build
-lib/
+# Build (Functions only)
+functions/lib/
 dist/
 build/
+
+# Flutter Mobile
+mobile/.dart_tool/
+mobile/.packages
+mobile/build/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/*.iml
+mobile/.metadata
+mobile/pubspec.lock
