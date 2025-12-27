@@ -1,0 +1,142 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ============================================
+    // HELPER FUNCTIONS
+    // ============================================
+    
+    // Check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Check if the authenticated user is the owner of the document
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Validate timestamp is a server timestamp
+    function isValidTimestamp(field) {
+      return request.resource.data[field] == request.time;
+    }
+    
+    // Check if a field exists in the incoming data
+    function hasField(field) {
+      return field in request.resource.data;
+    }
+    
+    // Validate string field length
+    function isValidString(field, minLen, maxLen) {
+      return hasField(field) 
+        && request.resource.data[field] is string
+        && request.resource.data[field].size() >= minLen
+        && request.resource.data[field].size() <= maxLen;
+    }
+    
+    // ============================================
+    // USERS COLLECTION
+    // ============================================
+    match /users/{userId} {
+      // Users can read their own profile
+      allow read: if isOwner(userId);
+      
+      // Users can create their own profile
+      allow create: if isOwner(userId)
+        && hasField('name')
+        && hasField('email')
+        && hasField('createdAt')
+        && hasField('lastActive')
+        && hasField('notificationPreferences')
+        && request.resource.data.notificationPreferences.keys().hasAll(['dailyVerse', 'hadithReminder'])
+        && request.resource.data.notificationPreferences.dailyVerse is bool
+        && request.resource.data.notificationPreferences.hadithReminder is bool;
+      
+      // Users can update their own profile (except createdAt)
+      allow update: if isOwner(userId)
+        && (!hasField('createdAt') || request.resource.data.createdAt == resource.data.createdAt);
+      
+      // Users cannot delete their profile (handled by admin or Cloud Functions)
+      allow delete: if false;
+    }
+    
+    // ============================================
+    // CONVERSATIONS COLLECTION
+    // ============================================
+    match /conversations/{userId}/{conversationId} {
+      // Users can read their own conversations
+      allow read: if isOwner(userId);
+      
+      // Users can create conversations in their own collection
+      allow create: if isOwner(userId)
+        && hasField('prompt')
+        && hasField('response')
+        && hasField('sources')
+        && hasField('createdAt')
+        && isValidString('prompt', 1, 2000)
+        && isValidString('response', 1, 10000)
+        && request.resource.data.sources is list;
+      
+      // Conversations are immutable after creation
+      allow update: if false;
+      
+      // Users can delete their own conversations
+      allow delete: if isOwner(userId);
+    }
+    
+    // ============================================
+    // FAVORITES COLLECTION
+    // ============================================
+    match /favorites/{userId}/items/{itemId} {
+      // Users can read their own favorites
+      allow read: if isOwner(userId);
+      
+      // Users can create favorites in their own collection
+      allow create: if isOwner(userId)
+        && hasField('type')
+        && hasField('referenceId')
+        && hasField('text')
+        && hasField('createdAt')
+        && request.resource.data.type in ['quran', 'hadith', 'ai']
+        && isValidString('referenceId', 1, 100)
+        && isValidString('text', 1, 5000);
+      
+      // Favorites are immutable after creation
+      allow update: if false;
+      
+      // Users can delete their own favorites
+      allow delete: if isOwner(userId);
+    }
+    
+    // ============================================
+    // FCM TOKENS COLLECTION
+    // ============================================
+    match /fcmTokens/{userId} {
+      // Users can read their own FCM tokens
+      allow read: if isOwner(userId);
+      
+      // Users can create/update their FCM tokens
+      allow write: if isOwner(userId)
+        && hasField('token')
+        && hasField('updatedAt');
+      
+      // Users can delete their own FCM tokens
+      allow delete: if isOwner(userId);
+    }
+    
+    // ============================================
+    // RATE LIMITING COLLECTION (Admin Only)
+    // ============================================
+    match /rateLimits/{userId} {
+      // Only Cloud Functions can access rate limits
+      allow read, write: if false;
+    }
+    
+    // ============================================
+    // DEFAULT: DENY ALL
+    // ============================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
