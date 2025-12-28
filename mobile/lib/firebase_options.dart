@@ -1,16 +1,11 @@
-// File generated for testing purposes
-// Replace with actual Firebase configuration from FlutterFire CLI
-// Run: flutterfire configure
+// Firebase configuration for tqwa-ai project
+// Generated from Firebase Console
 
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
-import 'config/env_config.dart';
 
 /// Default [FirebaseOptions] for use with your Firebase apps.
-/// 
-/// IMPORTANT: Replace these placeholder values with your actual Firebase config.
-/// Generate using: `flutterfire configure`
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
@@ -43,47 +38,34 @@ class DefaultFirebaseOptions {
     }
   }
 
-  /// Get project ID based on environment
-  static String get _projectId {
-    switch (EnvConfig.environment) {
-      case Environment.dev:
-        return 'taqwa-ai-dev';
-      case Environment.staging:
-        return 'taqwa-ai-staging';
-      case Environment.prod:
-        return 'taqwa-ai';
-    }
-  }
-
-  // ============================================================
-  // PLACEHOLDER VALUES - REPLACE WITH YOUR FIREBASE PROJECT CONFIG
-  // Run `flutterfire configure` to generate these automatically
-  // ============================================================
-  
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'YOUR-WEB-API-KEY',
-    appId: '1:000000000000:web:0000000000000000000000',
-    messagingSenderId: '000000000000',
-    projectId: 'taqwa-ai',
-    authDomain: 'taqwa-ai.firebaseapp.com',
-    storageBucket: 'taqwa-ai.appspot.com',
-    measurementId: 'G-XXXXXXXXXX',
+    apiKey: 'AIzaSyCF8ktbd-G4FQNF-5dOxQke1jHa4q27cWo',
+    appId: '1:352375214270:web:7e43833f24c2c38e3a0eef',
+    messagingSenderId: '352375214270',
+    projectId: 'tqwa-ai',
+    authDomain: 'tqwa-ai.firebaseapp.com',
+    storageBucket: 'tqwa-ai.firebasestorage.app',
+    measurementId: 'G-HV7YN8PVQ3',
   );
 
+  // For Android: Download google-services.json from Firebase Console
+  // and place it in android/app/
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'YOUR-ANDROID-API-KEY',
-    appId: '1:000000000000:android:0000000000000000000000',
-    messagingSenderId: '000000000000',
-    projectId: 'taqwa-ai',
-    storageBucket: 'taqwa-ai.appspot.com',
+    apiKey: 'AIzaSyCF8ktbd-G4FQNF-5dOxQke1jHa4q27cWo',
+    appId: '1:352375214270:android:ADD_ANDROID_APP_ID',
+    messagingSenderId: '352375214270',
+    projectId: 'tqwa-ai',
+    storageBucket: 'tqwa-ai.firebasestorage.app',
   );
 
+  // For iOS: Download GoogleService-Info.plist from Firebase Console
+  // and place it in ios/Runner/
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'YOUR-IOS-API-KEY',
-    appId: '1:000000000000:ios:0000000000000000000000',
-    messagingSenderId: '000000000000',
-    projectId: 'taqwa-ai',
-    storageBucket: 'taqwa-ai.appspot.com',
+    apiKey: 'AIzaSyCF8ktbd-G4FQNF-5dOxQke1jHa4q27cWo',
+    appId: '1:352375214270:ios:ADD_IOS_APP_ID',
+    messagingSenderId: '352375214270',
+    projectId: 'tqwa-ai',
+    storageBucket: 'tqwa-ai.firebasestorage.app',
     iosBundleId: 'com.taqwaai.mobile',
   );
 }
