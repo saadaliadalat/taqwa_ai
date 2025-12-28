@@ -32,7 +32,7 @@ class QuranState {
   final String translationEdition;
 
   const QuranState({
-    this.surahs = const [],
+    this.surahs = SurahList.surahs,
     this.currentSurah,
     this.currentAyahs = const [],
     this.currentAyahIndex,

@@ -52,6 +52,18 @@ class SurahModel {
     );
   }
 
+  /// Create from AlQuran.cloud API response
+  factory SurahModel.fromAlQuranCloud(Map<String, dynamic> json) {
+    return SurahModel(
+      number: json['number'] as int,
+      name: json['name'] as String,
+      englishName: json['englishName'] as String,
+      englishNameTranslation: json['englishNameTranslation'] as String,
+      numberOfAyahs: json['numberOfAyahs'] as int,
+      revelationType: json['revelationType'] as String,
+    );
+  }
+
   /// Convert to JSON
   Map<String, dynamic> toJson() {
     return {

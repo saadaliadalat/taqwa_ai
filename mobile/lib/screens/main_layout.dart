@@ -7,36 +7,33 @@ import 'ask_ai/ask_ai_screen.dart';
 import 'quran/quran_screen.dart';
 import 'profile/profile_screen.dart';
 
+/// Tab index provider for navigation between tabs
+final tabIndexProvider = StateProvider<int>((ref) => 0);
+
 /// Main app layout with bottom navigation
-class MainLayout extends ConsumerStatefulWidget {
+class MainLayout extends ConsumerWidget {
   const MainLayout({super.key});
 
   @override
-  ConsumerState<MainLayout> createState() => _MainLayoutState();
-}
-
-class _MainLayoutState extends ConsumerState<MainLayout> {
-  int _currentIndex = 0;
-
-  final List<Widget> _screens = const [
-    HomeScreen(),
-    AskAiScreen(),
-    QuranScreen(),
-    ProfileScreen(),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final currentIndex = ref.watch(tabIndexProvider);
+
+    final List<Widget> screens = const [
+      HomeScreen(),
+      AskAiScreen(),
+      QuranScreen(),
+      ProfileScreen(),
+    ];
 
     return Scaffold(
       body: Stack(
         children: [
           // Main content
           IndexedStack(
-            index: _currentIndex,
-            children: _screens,
+            index: currentIndex,
+            children: screens,
           ),
           
           // Offline banner at top
@@ -69,29 +66,29 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
                   icon: Icons.home_outlined,
                   activeIcon: Icons.home,
                   label: 'Home',
-                  isSelected: _currentIndex == 0,
-                  onTap: () => _onItemTapped(0),
+                  isSelected: currentIndex == 0,
+                  onTap: () => ref.read(tabIndexProvider.notifier).state = 0,
                 ),
                 _NavItem(
                   icon: Icons.auto_awesome_outlined,
                   activeIcon: Icons.auto_awesome,
                   label: 'Ask',
-                  isSelected: _currentIndex == 1,
-                  onTap: () => _onItemTapped(1),
+                  isSelected: currentIndex == 1,
+                  onTap: () => ref.read(tabIndexProvider.notifier).state = 1,
                 ),
                 _NavItem(
                   icon: Icons.menu_book_outlined,
                   activeIcon: Icons.menu_book,
                   label: 'Quran',
-                  isSelected: _currentIndex == 2,
-                  onTap: () => _onItemTapped(2),
+                  isSelected: currentIndex == 2,
+                  onTap: () => ref.read(tabIndexProvider.notifier).state = 2,
                 ),
                 _NavItem(
                   icon: Icons.person_outline,
                   activeIcon: Icons.person,
                   label: 'Profile',
-                  isSelected: _currentIndex == 3,
-                  onTap: () => _onItemTapped(3),
+                  isSelected: currentIndex == 3,
+                  onTap: () => ref.read(tabIndexProvider.notifier).state = 3,
                 ),
               ],
             ),
@@ -99,12 +96,6 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
         ),
       ),
     );
-  }
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _currentIndex = index;
-    });
   }
 }
 

@@ -1,18 +1,23 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 import 'package:http/http.dart' as http;
 import '../models/message_model.dart';
 import '../models/hadith_model.dart';
 import '../models/ayah_model.dart';
 import '../models/surah_model.dart';
 
-/// API Service for backend communication
+/// API Service - Works with free external APIs
 class ApiService {
-  // Base URL for the backend API
-  static const String _baseUrl = 'https://your-firebase-functions-url.cloudfunctions.net';
+  // Gemini API
+  static const String _geminiApiKey = 'AIzaSyDWw2Dy14i9vPiTt10RQjsWmgIMSfzTKeQ';
+  static const String _geminiApiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+  
+  // Free Quran API
+  static const String _quranApiUrl = 'https://api.alquran.cloud/v1';
   
   // Timeout duration
-  static const Duration _timeout = Duration(seconds: 30);
+  static const Duration _timeout = Duration(seconds: 60);
   
   String? _authToken;
 
@@ -34,10 +39,23 @@ class ApiService {
   }
 
   // ============================================
-  // AI Chat Endpoints
+  // AI Chat - REAL Gemini API
   // ============================================
 
-  /// Send a question to the AI
+  /// System prompt for Islamic AI assistant
+  static const String _systemPrompt = '''You are Taqwa AI, an Islamic knowledge assistant. Your role is to:
+
+1. Answer questions about Islam based on Quran and authentic Hadith
+2. Provide references when possible (Surah:Ayah or Hadith collection)
+3. Be respectful and follow Islamic ethics
+4. Clarify when there are different scholarly opinions
+5. Encourage seeking knowledge from qualified scholars for complex fiqh matters
+6. Use Arabic terms with transliterations when appropriate
+7. Be concise but comprehensive
+
+Remember: You are a helpful assistant, not a mufti. Always recommend consulting local scholars for fatwa-level questions.''';
+
+  /// Ask a question to Gemini AI
   Future<MessageModel> askAi({
     required String question,
     required String conversationId,
@@ -45,63 +63,149 @@ class ApiService {
     String? madhhab,
   }) async {
     try {
-      final response = await http
-          .post(
-            Uri.parse('$_baseUrl/ask'),
-            headers: _headers,
-            body: jsonEncode({
-              'question': question,
-              'conversationId': conversationId,
-              if (context != null) 'context': context,
-              if (madhhab != null) 'madhhab': madhhab,
-            }),
-          )
-          .timeout(_timeout);
+      final prompt = _buildPrompt(question, context, madhhab);
+      
+      final response = await http.post(
+        Uri.parse('$_geminiApiUrl?key=$_geminiApiKey'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'contents': [
+            {
+              'parts': [
+                {'text': prompt}
+              ]
+            }
+          ],
+          'generationConfig': {
+            'temperature': 0.7,
+            'topK': 40,
+            'topP': 0.95,
+            'maxOutputTokens': 1024,
+          },
+          'safetySettings': [
+            {
+              'category': 'HARM_CATEGORY_HARASSMENT',
+              'threshold': 'BLOCK_MEDIUM_AND_ABOVE'
+            },
+            {
+              'category': 'HARM_CATEGORY_HATE_SPEECH',
+              'threshold': 'BLOCK_MEDIUM_AND_ABOVE'
+            },
+            {
+              'category': 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
+              'threshold': 'BLOCK_MEDIUM_AND_ABOVE'
+            },
+            {
+              'category': 'HARM_CATEGORY_DANGEROUS_CONTENT',
+              'threshold': 'BLOCK_MEDIUM_AND_ABOVE'
+            },
+          ],
+        }),
+      ).timeout(_timeout);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
-        return MessageModel.fromApi(data, conversationId);
+        final candidates = data['candidates'] as List<dynamic>?;
+        
+        if (candidates != null && candidates.isNotEmpty) {
+          final candidate = candidates[0] as Map<String, dynamic>;
+          final content = candidate['content'] as Map<String, dynamic>?;
+          final parts = content?['parts'] as List<dynamic>?;
+          
+          if (parts != null && parts.isNotEmpty) {
+            final text = parts[0]['text'] as String? ?? 'No response generated.';
+            
+            return MessageModel(
+              id: DateTime.now().millisecondsSinceEpoch.toString(),
+              conversationId: conversationId,
+              role: 'assistant',
+              content: text,
+              createdAt: DateTime.now(),
+            );
+          }
+        }
+        
+        // Fallback if parsing fails
+        return MessageModel(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          conversationId: conversationId,
+          role: 'assistant',
+          content: 'I apologize, but I could not generate a response. Please try again.',
+          createdAt: DateTime.now(),
+        );
       } else {
-        throw ApiException(
-          'Failed to get AI response',
-          statusCode: response.statusCode,
-          body: response.body,
+        // API error - return error message
+        return MessageModel(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          conversationId: conversationId,
+          role: 'assistant',
+          content: 'I apologize, there was an error connecting to the AI service. Please try again later.\n\n_Error: ${response.statusCode}_',
+          createdAt: DateTime.now(),
         );
       }
     } on TimeoutException {
-      throw ApiException('Request timed out. Please try again.');
+      return MessageModel(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        conversationId: conversationId,
+        role: 'assistant',
+        content: 'The request timed out. Please check your internet connection and try again.',
+        createdAt: DateTime.now(),
+      );
     } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException('Network error: ${e.toString()}');
+      return MessageModel(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        conversationId: conversationId,
+        role: 'assistant',
+        content: 'An error occurred: ${e.toString()}. Please try again.',
+        createdAt: DateTime.now(),
+      );
     }
   }
 
+  String _buildPrompt(String question, String? context, String? madhhab) {
+    final buffer = StringBuffer();
+    buffer.writeln(_systemPrompt);
+    buffer.writeln();
+    
+    if (madhhab != null && madhhab.isNotEmpty) {
+      buffer.writeln('The user follows the $madhhab school of thought (madhab). Consider this when applicable.');
+    }
+    
+    if (context != null && context.isNotEmpty) {
+      buffer.writeln('Context from previous conversation:');
+      buffer.writeln(context);
+      buffer.writeln();
+    }
+    
+    buffer.writeln('User Question: $question');
+    buffer.writeln();
+    buffer.writeln('Please provide a helpful, accurate response based on authentic Islamic sources.');
+    
+    return buffer.toString();
+  }
+
   // ============================================
-  // Quran Endpoints
+  // Quran Endpoints (Using alquran.cloud API)
   // ============================================
 
   /// Get all surahs
   Future<List<SurahModel>> getSurahs() async {
     try {
       final response = await http
-          .get(
-            Uri.parse('$_baseUrl/quran/surahs'),
-            headers: _headers,
-          )
+          .get(Uri.parse('$_quranApiUrl/surah'))
           .timeout(_timeout);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
-        final surahs = (data['surahs'] as List<dynamic>)
-            .map((s) => SurahModel.fromApi(s as Map<String, dynamic>))
-            .toList();
-        return surahs;
-      } else {
-        // Return local list if API fails
-        return SurahList.surahs;
+        if (data['status'] == 'OK') {
+          final surahs = (data['data'] as List<dynamic>)
+              .map((s) => SurahModel.fromAlQuranCloud(s as Map<String, dynamic>))
+              .toList();
+          return surahs;
+        }
       }
+      return SurahList.surahs;
     } catch (e) {
-      // Return local list as fallback
       return SurahList.surahs;
     }
   }
@@ -112,27 +216,46 @@ class ApiService {
     String translationEdition = 'en.sahih',
   }) async {
     try {
+      // Get Arabic and translation together
       final response = await http
-          .get(
-            Uri.parse('$_baseUrl/quran/surah/$surahNumber?translation=$translationEdition'),
-            headers: _headers,
-          )
+          .get(Uri.parse('$_quranApiUrl/surah/$surahNumber/editions/quran-uthmani,$translationEdition'))
           .timeout(_timeout);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
-        final ayahs = (data['ayahs'] as List<dynamic>)
-            .map((a) => AyahModel.fromApi(a as Map<String, dynamic>))
-            .toList();
-        return ayahs;
-      } else {
-        throw ApiException(
-          'Failed to fetch surah',
-          statusCode: response.statusCode,
-        );
+        if (data['status'] == 'OK') {
+          final editions = data['data'] as List<dynamic>;
+          final arabicEdition = editions[0] as Map<String, dynamic>;
+          final transEdition = editions.length > 1 
+              ? editions[1] as Map<String, dynamic> 
+              : arabicEdition;
+          
+          final arabicAyahs = arabicEdition['ayahs'] as List<dynamic>;
+          final translationAyahs = transEdition['ayahs'] as List<dynamic>;
+          
+          final List<AyahModel> ayahs = [];
+          for (int i = 0; i < arabicAyahs.length; i++) {
+            final arabic = arabicAyahs[i] as Map<String, dynamic>;
+            final translation = i < translationAyahs.length 
+                ? translationAyahs[i] as Map<String, dynamic>
+                : arabic;
+            
+            ayahs.add(AyahModel(
+              number: arabic['number'] as int? ?? i + 1,
+              numberInSurah: arabic['numberInSurah'] as int? ?? i + 1,
+              surahNumber: surahNumber,
+              text: arabic['text'] as String? ?? '',
+              translation: translation['text'] as String?,
+              juz: arabic['juz'] as int? ?? 1,
+              page: arabic['page'] as int? ?? 1,
+              hizbQuarter: arabic['hizbQuarter'] as int? ?? 1,
+              sajda: arabic['sajda'] != null && arabic['sajda'] != false,
+            ));
+          }
+          return ayahs;
+        }
       }
-    } on TimeoutException {
-      throw ApiException('Request timed out');
+      throw ApiException('Failed to fetch surah');
     } catch (e) {
       if (e is ApiException) rethrow;
       throw ApiException('Failed to fetch surah: ${e.toString()}');
@@ -147,21 +270,30 @@ class ApiService {
   }) async {
     try {
       final response = await http
-          .get(
-            Uri.parse('$_baseUrl/quran/ayah/$surahNumber:$ayahNumber?translation=$translationEdition'),
-            headers: _headers,
-          )
+          .get(Uri.parse('$_quranApiUrl/ayah/$surahNumber:$ayahNumber/editions/quran-uthmani,$translationEdition'))
           .timeout(_timeout);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
-        return AyahModel.fromApi(data);
-      } else {
-        throw ApiException(
-          'Failed to fetch ayah',
-          statusCode: response.statusCode,
-        );
+        if (data['status'] == 'OK') {
+          final editions = data['data'] as List<dynamic>;
+          final arabic = editions[0] as Map<String, dynamic>;
+          final translation = editions.length > 1 ? editions[1] as Map<String, dynamic> : arabic;
+          
+          return AyahModel(
+            number: arabic['number'] as int? ?? 1,
+            numberInSurah: arabic['numberInSurah'] as int? ?? ayahNumber,
+            surahNumber: surahNumber,
+            text: arabic['text'] as String? ?? '',
+            translation: translation['text'] as String?,
+            juz: arabic['juz'] as int? ?? 1,
+            page: arabic['page'] as int? ?? 1,
+            hizbQuarter: arabic['hizbQuarter'] as int? ?? 1,
+            sajda: arabic['sajda'] != null && arabic['sajda'] != false,
+          );
+        }
       }
+      throw ApiException('Failed to fetch ayah');
     } catch (e) {
       if (e is ApiException) rethrow;
       throw ApiException('Failed to fetch ayah: ${e.toString()}');
@@ -173,25 +305,40 @@ class ApiService {
     String translationEdition = 'en.sahih',
   }) async {
     try {
-      final response = await http
-          .get(
-            Uri.parse('$_baseUrl/quran/random?translation=$translationEdition'),
-            headers: _headers,
-          )
+      // Generate random surah and ayah
+      final random = Random();
+      final surahNumber = random.nextInt(114) + 1;
+      
+      // Get surah info first to know ayah count
+      final surahResponse = await http
+          .get(Uri.parse('$_quranApiUrl/surah/$surahNumber'))
           .timeout(_timeout);
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body) as Map<String, dynamic>;
-        return AyahModel.fromApi(data);
-      } else {
-        throw ApiException(
-          'Failed to fetch random ayah',
-          statusCode: response.statusCode,
-        );
+      
+      int maxAyahs = 7; // Default to Al-Fatiha length
+      if (surahResponse.statusCode == 200) {
+        final surahData = jsonDecode(surahResponse.body) as Map<String, dynamic>;
+        if (surahData['status'] == 'OK') {
+          maxAyahs = surahData['data']['numberOfAyahs'] as int;
+        }
       }
+      
+      final ayahNumber = random.nextInt(maxAyahs) + 1;
+      return getAyah(
+        surahNumber: surahNumber,
+        ayahNumber: ayahNumber,
+        translationEdition: translationEdition,
+      );
     } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException('Failed to fetch random ayah: ${e.toString()}');
+      // Fallback to Al-Fatiha verse 5
+      return AyahModel(
+        number: 5,
+        numberInSurah: 5,
+        surahNumber: 1,
+        text: 'إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ',
+        translation: 'It is You we worship and You we ask for help.',
+        juz: 1,
+        page: 1,
+      );
     }
   }
 
@@ -202,32 +349,38 @@ class ApiService {
   }) async {
     try {
       final response = await http
-          .get(
-            Uri.parse('$_baseUrl/quran/search?q=${Uri.encodeComponent(query)}&translation=$translationEdition'),
-            headers: _headers,
-          )
+          .get(Uri.parse('$_quranApiUrl/search/$query/$translationEdition'))
           .timeout(_timeout);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
-        final results = (data['results'] as List<dynamic>)
-            .map((a) => AyahModel.fromApi(a as Map<String, dynamic>))
-            .toList();
-        return results;
-      } else {
-        throw ApiException(
-          'Search failed',
-          statusCode: response.statusCode,
-        );
+        if (data['status'] == 'OK' && data['data'] != null) {
+          final searchData = data['data'] as Map<String, dynamic>;
+          final matches = searchData['matches'] as List<dynamic>? ?? [];
+          
+          return matches.take(20).map((m) {
+            final match = m as Map<String, dynamic>;
+            final surah = match['surah'] as Map<String, dynamic>;
+            return AyahModel(
+              number: match['number'] as int? ?? 0,
+              numberInSurah: match['numberInSurah'] as int? ?? 0,
+              surahNumber: surah['number'] as int? ?? 0,
+              text: '', // Arabic not returned in search
+              translation: match['text'] as String?,
+              juz: match['juz'] as int? ?? 1,
+              page: match['page'] as int? ?? 1,
+            );
+          }).toList();
+        }
       }
+      return [];
     } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException('Search failed: ${e.toString()}');
+      return [];
     }
   }
 
   // ============================================
-  // Hadith Endpoints
+  // Hadith Endpoints (Placeholder)
   // ============================================
 
   /// Get hadith by collection and number
@@ -235,27 +388,15 @@ class ApiService {
     required String collection,
     required String hadithNumber,
   }) async {
-    try {
-      final response = await http
-          .get(
-            Uri.parse('$_baseUrl/hadith/$collection/$hadithNumber'),
-            headers: _headers,
-          )
-          .timeout(_timeout);
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body) as Map<String, dynamic>;
-        return HadithModel.fromApi(data);
-      } else {
-        throw ApiException(
-          'Failed to fetch hadith',
-          statusCode: response.statusCode,
-        );
-      }
-    } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException('Failed to fetch hadith: ${e.toString()}');
-    }
+    // Return placeholder hadith
+    return HadithModel(
+      id: '${collection}_$hadithNumber',
+      collection: collection,
+      hadithNumber: hadithNumber,
+      arabicText: '',
+      translation: 'Hadith API is being configured. Please check back later or consult hadith collections directly.',
+      narrator: 'System Message',
+    );
   }
 
   /// Search hadith
@@ -263,72 +404,28 @@ class ApiService {
     required String query,
     String? collection,
   }) async {
-    try {
-      var url = '$_baseUrl/hadith/search?q=${Uri.encodeComponent(query)}';
-      if (collection != null) {
-        url += '&collection=$collection';
-      }
-
-      final response = await http
-          .get(
-            Uri.parse(url),
-            headers: _headers,
-          )
-          .timeout(_timeout);
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body) as Map<String, dynamic>;
-        final results = (data['results'] as List<dynamic>)
-            .map((h) => HadithModel.fromApi(h as Map<String, dynamic>))
-            .toList();
-        return results;
-      } else {
-        throw ApiException(
-          'Search failed',
-          statusCode: response.statusCode,
-        );
-      }
-    } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException('Search failed: ${e.toString()}');
-    }
+    // Return empty for now
+    return [];
   }
 
   /// Get random hadith
   Future<HadithModel> getRandomHadith({String? collection}) async {
-    try {
-      var url = '$_baseUrl/hadith/random';
-      if (collection != null) {
-        url += '?collection=$collection';
-      }
-
-      final response = await http
-          .get(
-            Uri.parse(url),
-            headers: _headers,
-          )
-          .timeout(_timeout);
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body) as Map<String, dynamic>;
-        return HadithModel.fromApi(data);
-      } else {
-        throw ApiException(
-          'Failed to fetch random hadith',
-          statusCode: response.statusCode,
-        );
-      }
-    } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException('Failed to fetch random hadith: ${e.toString()}');
-    }
+    // Return a well-known hadith
+    return HadithModel(
+      id: 'bukhari_1',
+      collection: 'Sahih al-Bukhari',
+      hadithNumber: '1',
+      arabicText: 'إِنَّمَا الأَعْمَالُ بِالنِّيَّاتِ',
+      translation: 'The reward of deeds depends upon the intentions and every person will get the reward according to what he has intended.',
+      narrator: 'Umar ibn al-Khattab (رضي الله عنه)',
+      grade: 'Sahih',
+    );
   }
 
   // ============================================
-  // Favorites Endpoints
+  // Favorites (Local only - no API needed)
   // ============================================
 
-  /// Save a favorite
   Future<void> saveFavorite({
     required String type,
     required String content,
@@ -336,53 +433,11 @@ class ApiService {
     String? reference,
     Map<String, dynamic>? metadata,
   }) async {
-    try {
-      final response = await http
-          .post(
-            Uri.parse('$_baseUrl/favorites'),
-            headers: _headers,
-            body: jsonEncode({
-              'type': type,
-              'content': content,
-              if (arabicText != null) 'arabicText': arabicText,
-              if (reference != null) 'reference': reference,
-              if (metadata != null) ...metadata,
-            }),
-          )
-          .timeout(_timeout);
-
-      if (response.statusCode != 200 && response.statusCode != 201) {
-        throw ApiException(
-          'Failed to save favorite',
-          statusCode: response.statusCode,
-        );
-      }
-    } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException('Failed to save favorite: ${e.toString()}');
-    }
+    // Favorites are handled locally by HiveService
   }
 
-  /// Delete a favorite
   Future<void> deleteFavorite(String favoriteId) async {
-    try {
-      final response = await http
-          .delete(
-            Uri.parse('$_baseUrl/favorites/$favoriteId'),
-            headers: _headers,
-          )
-          .timeout(_timeout);
-
-      if (response.statusCode != 200 && response.statusCode != 204) {
-        throw ApiException(
-          'Failed to delete favorite',
-          statusCode: response.statusCode,
-        );
-      }
-    } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException('Failed to delete favorite: ${e.toString()}');
-    }
+    // Favorites are handled locally by HiveService
   }
 }
 

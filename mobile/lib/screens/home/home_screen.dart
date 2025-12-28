@@ -12,6 +12,7 @@ import '../../widgets/ayah_card.dart';
 import '../../widgets/loading_widget.dart';
 import '../ask_ai/ask_ai_screen.dart';
 import '../favorites/favorites_screen.dart';
+import '../main_layout.dart';
 
 /// Home screen with greeting, daily ayah, and quick actions
 class HomeScreen extends ConsumerStatefulWidget {
@@ -29,11 +30,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void _loadData() {
-    final user = ref.read(authStateProvider).valueOrNull;
-    if (user != null) {
-      ref.read(conversationsProvider.notifier).loadConversations(user.uid);
-      ref.read(favoritesProvider.notifier).loadFavorites(user.uid);
-    }
+    // Use Future.microtask to avoid modifying providers during build
+    Future.microtask(() {
+      final user = ref.read(authStateProvider).valueOrNull;
+      if (user != null) {
+        ref.read(conversationsProvider.notifier).loadConversations(user.uid);
+        ref.read(favoritesProvider.notifier).loadFavorites(user.uid);
+      }
+    });
   }
 
   @override
@@ -292,9 +296,9 @@ class _DailyAyahCard extends ConsumerWidget {
 }
 
 /// Quick actions section
-class _QuickActionsSection extends StatelessWidget {
+class _QuickActionsSection extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Row(
       children: [
         Expanded(
@@ -304,6 +308,7 @@ class _QuickActionsSection extends StatelessWidget {
             color: AppColors.primary,
             onTap: () {
               // Navigate to Ask AI (index 1 in bottom nav)
+              ref.read(tabIndexProvider.notifier).state = 1;
             },
           ),
         ),
@@ -315,6 +320,7 @@ class _QuickActionsSection extends StatelessWidget {
             color: AppColors.secondary,
             onTap: () {
               // Navigate to Quran (index 2 in bottom nav)
+              ref.read(tabIndexProvider.notifier).state = 2;
             },
           ),
         ),

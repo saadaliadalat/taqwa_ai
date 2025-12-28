@@ -101,7 +101,12 @@ class _AskAiScreenState extends ConsumerState<AskAiScreen> {
             child: chatState == null
                 ? const LoadingWidget(message: 'Preparing...')
                 : chatState.messages.isEmpty
-                    ? _EmptyConversation()
+                    ? _EmptyConversation(
+                        onQuestionTap: (question) {
+                          _messageController.text = question;
+                          _sendMessage();
+                        },
+                      )
                     : _MessagesList(
                         messages: chatState.messages,
                         scrollController: _scrollController,
@@ -161,6 +166,10 @@ class _AskAiScreenState extends ConsumerState<AskAiScreen> {
 
 /// Empty conversation placeholder
 class _EmptyConversation extends StatelessWidget {
+  final void Function(String question)? onQuestionTap;
+  
+  const _EmptyConversation({this.onQuestionTap});
+  
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -214,14 +223,17 @@ class _EmptyConversation extends StatelessWidget {
             // Example questions
             _ExampleQuestion(
               text: 'What does the Quran say about patience?',
+              onTap: () => onQuestionTap?.call('What does the Quran say about patience?'),
             ),
             const SizedBox(height: 12),
             _ExampleQuestion(
               text: 'How to perform Wudu correctly?',
+              onTap: () => onQuestionTap?.call('How to perform Wudu correctly?'),
             ),
             const SizedBox(height: 12),
             _ExampleQuestion(
               text: 'What are the pillars of Islam?',
+              onTap: () => onQuestionTap?.call('What are the pillars of Islam?'),
             ),
           ],
         ),
@@ -233,8 +245,9 @@ class _EmptyConversation extends StatelessWidget {
 /// Example question chip
 class _ExampleQuestion extends StatelessWidget {
   final String text;
+  final VoidCallback? onTap;
 
-  const _ExampleQuestion({required this.text});
+  const _ExampleQuestion({required this.text, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -242,9 +255,7 @@ class _ExampleQuestion extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     return InkWell(
-      onTap: () {
-        // TODO: Use this as input
-      },
+      onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
         width: double.infinity,
@@ -273,6 +284,11 @@ class _ExampleQuestion extends StatelessWidget {
                       : AppColors.textPrimary,
                 ),
               ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios,
+              size: 14,
+              color: AppColors.primary,
             ),
           ],
         ),
