@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -38,9 +37,14 @@ class NotificationService {
   /// Request notification permission
   Future<NotificationSettings> _requestPermission() async {
     // For Android 13+, we need to request POST_NOTIFICATIONS permission
-    if (Platform.isAndroid) {
-      final status = await Permission.notification.request();
-      debugPrint('Notification permission status: $status');
+    // Skip this on web as Platform is not available
+    if (!kIsWeb) {
+      try {
+        final status = await Permission.notification.request();
+        debugPrint('Notification permission status: $status');
+      } catch (e) {
+        debugPrint('Permission request not supported on this platform: $e');
+      }
     }
 
     // Request Firebase Messaging permission

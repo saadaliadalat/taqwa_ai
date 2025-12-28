@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <!--
+    If you are serving your web app in a path other than the root, change the
+    href value below to reflect the base path you are serving from.
+  -->
+  <base href="$FLUTTER_BASE_HREF">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+  <!-- Primary Meta Tags -->
+  <title>Taqwa AI - Islamic AI Assistant</title>
+  <meta name="title" content="Taqwa AI - Islamic AI Assistant">
+  <meta name="description"
+    content="Your trusted Islamic AI companion for Quran, Hadith, and spiritual guidance. Get authentic answers grounded in Islamic scholarship.">
+  <meta name="keywords"
+    content="Islamic AI, Quran, Hadith, Islam, Muslim, Fiqh, Dua, Prayer, Halal, Haram, Islamic guidance">
+  <meta name="author" content="Taqwa AI">
+  <meta name="robots" content="index, follow">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://taqwa-ai.web.app/">
+  <meta property="og:title" content="Taqwa AI - Islamic AI Assistant">
+  <meta property="og:description"
+    content="Your trusted Islamic AI companion for Quran, Hadith, and spiritual guidance.">
+  <meta property="og:image" content="icons/Icon-512.png">
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://taqwa-ai.web.app/">
+  <meta property="twitter:title" content="Taqwa AI - Islamic AI Assistant">
+  <meta property="twitter:description"
+    content="Your trusted Islamic AI companion for Quran, Hadith, and spiritual guidance.">
+  <meta property="twitter:image" content="icons/Icon-512.png">
+
+  <!-- Theme Color -->
+  <meta name="theme-color" content="#1B7D5D">
+  <meta name="msapplication-navbutton-color" content="#1B7D5D">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <!-- iOS meta tags & icons -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Taqwa AI">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="icons/Icon-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/Icon-192.png">
+  <link rel="apple-touch-icon" sizes="167x167" href="icons/Icon-192.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon.png">
+
+  <!-- Manifest -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- Preconnect to external resources -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://api.alquran.cloud">
+
+  <!-- Loading styles -->
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #FAFBFC;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    .loading-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background: linear-gradient(135deg, #FAFBFC 0%, #F0F5F3 100%);
+    }
+
+    .loading-logo {
+      width: 80px;
+      height: 80px;
+      margin-bottom: 24px;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .loading-text {
+      color: #1B7D5D;
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .loading-subtitle {
+      color: #6B7280;
+      font-size: 14px;
+    }
+
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      margin-top: 24px;
+      border: 3px solid #E5E7EB;
+      border-top-color: #1B7D5D;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        transform: scale(1);
+      }
+
+      50% {
+        transform: scale(1.05);
+      }
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Loading screen shown while Flutter initializes -->
+  <div class="loading-container" id="loading">
+    <img src="icons/Icon-192.png" alt="Taqwa AI" class="loading-logo">
+    <div class="loading-text">Taqwa AI</div>
+    <div class="loading-subtitle">Islamic AI Assistant</div>
+    <div class="loading-spinner"></div>
+  </div>
+
+  <script>
+    // Hide loading screen when Flutter is ready
+    window.addEventListener('flutter-first-frame', function () {
+      const loading = document.getElementById('loading');
+      if (loading) {
+        loading.style.opacity = '0';
+        loading.style.transition = 'opacity 0.3s ease-out';
+        setTimeout(() => loading.remove(), 300);
+      }
+    });
+  </script>
+
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+
+</html>

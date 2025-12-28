@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/hive_service.dart';
 import '../services/connectivity_service.dart';
-import 'auth_provider.dart';
+import 'shared_providers.dart';
 
 /// Settings provider
 final settingsProvider = StateNotifierProvider<SettingsNotifier, SettingsState>((ref) {

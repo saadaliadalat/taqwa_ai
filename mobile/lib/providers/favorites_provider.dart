@@ -6,7 +6,7 @@ import '../models/hadith_model.dart';
 import '../models/message_model.dart';
 import '../services/api_service.dart';
 import '../services/hive_service.dart';
-import 'auth_provider.dart';
+import 'shared_providers.dart';
 import 'conversation_provider.dart';
 
 /// Favorites provider
@@ -62,6 +62,24 @@ class FavoritesState {
   int get ayahCount => favorites.where((f) => f.isAyah).length;
   int get hadithCount => favorites.where((f) => f.isHadith).length;
   int get aiResponseCount => favorites.where((f) => f.isAiResponse).length;
+
+  /// Check if item is favorited
+  bool isFavorited({
+    String? ayahReference,
+    String? hadithReference,
+    String? messageId,
+  }) {
+    if (ayahReference != null) {
+      return favorites.any((f) => f.isAyah && f.reference == ayahReference);
+    }
+    if (hadithReference != null) {
+      return favorites.any((f) => f.isHadith && f.reference == hadithReference);
+    }
+    if (messageId != null) {
+      return favorites.any((f) => f.isAiResponse && f.messageId == messageId);
+    }
+    return false;
+  }
 }
 
 /// Favorite filter enum

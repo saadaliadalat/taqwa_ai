@@ -3,7 +3,7 @@ import '../models/surah_model.dart';
 import '../models/ayah_model.dart';
 import '../services/api_service.dart';
 import '../services/hive_service.dart';
-import 'auth_provider.dart';
+import 'shared_providers.dart';
 import 'conversation_provider.dart';
 
 /// Quran provider

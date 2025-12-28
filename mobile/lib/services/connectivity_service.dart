@@ -13,7 +13,7 @@ class ConnectivityService {
   bool _isConnected = true;
   
   /// Subscription to connectivity changes
-  StreamSubscription<List<ConnectivityResult>>? _subscription;
+  StreamSubscription<ConnectivityResult>? _subscription;
 
   /// Get current connectivity state
   bool get isConnected => _isConnected;
@@ -27,16 +27,16 @@ class ConnectivityService {
     await _checkConnectivity();
     
     // Listen for connectivity changes
-    _subscription = _connectivity.onConnectivityChanged.listen((results) {
-      _updateConnectivity(results);
+    _subscription = _connectivity.onConnectivityChanged.listen((result) {
+      _updateConnectivity(result);
     });
   }
 
   /// Check current connectivity
   Future<bool> _checkConnectivity() async {
     try {
-      final results = await _connectivity.checkConnectivity();
-      _updateConnectivity(results);
+      final result = await _connectivity.checkConnectivity();
+      _updateConnectivity(result);
       return _isConnected;
     } catch (e) {
       debugPrint('Error checking connectivity: $e');
@@ -45,13 +45,11 @@ class ConnectivityService {
   }
 
   /// Update connectivity state
-  void _updateConnectivity(List<ConnectivityResult> results) {
+  void _updateConnectivity(ConnectivityResult result) {
     final wasConnected = _isConnected;
     
-    // Check if any result indicates connectivity
-    _isConnected = results.any((result) => 
-      result != ConnectivityResult.none
-    );
+    // Check if result indicates connectivity
+    _isConnected = result != ConnectivityResult.none;
     
     // Notify listeners if state changed
     if (wasConnected != _isConnected) {
@@ -67,16 +65,17 @@ class ConnectivityService {
 
   /// Get detailed connectivity type
   Future<ConnectivityType> getConnectivityType() async {
-    final results = await _connectivity.checkConnectivity();
+    final result = await _connectivity.checkConnectivity();
     
-    if (results.contains(ConnectivityResult.wifi)) {
-      return ConnectivityType.wifi;
-    } else if (results.contains(ConnectivityResult.mobile)) {
-      return ConnectivityType.mobile;
-    } else if (results.contains(ConnectivityResult.ethernet)) {
-      return ConnectivityType.ethernet;
-    } else {
-      return ConnectivityType.none;
+    switch (result) {
+      case ConnectivityResult.wifi:
+        return ConnectivityType.wifi;
+      case ConnectivityResult.mobile:
+        return ConnectivityType.mobile;
+      case ConnectivityResult.ethernet:
+        return ConnectivityType.ethernet;
+      default:
+        return ConnectivityType.none;
     }
   }
 

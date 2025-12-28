@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth_service.dart';
 import '../services/hive_service.dart';
 import '../models/user_model.dart';
+import 'shared_providers.dart';
 
 /// Auth service provider
 final authServiceProvider = Provider<AuthService>((ref) {
@@ -196,9 +197,4 @@ final authNotifierProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref
   final authService = ref.watch(authServiceProvider);
   final hiveService = ref.watch(hiveServiceProvider);
   return AuthNotifier(authService, hiveService);
-});
-
-/// Hive service provider
-final hiveServiceProvider = Provider<HiveService>((ref) {
-  return HiveService();
 });

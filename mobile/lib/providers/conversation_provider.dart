@@ -4,7 +4,7 @@ import '../models/conversation_model.dart';
 import '../models/message_model.dart';
 import '../services/api_service.dart';
 import '../services/hive_service.dart';
-import 'auth_provider.dart';
+import 'shared_providers.dart';
 
 /// API service provider
 final apiServiceProvider = Provider<ApiService>((ref) {
