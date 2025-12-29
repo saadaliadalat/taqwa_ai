@@ -92,7 +92,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 IconButton(
                   icon: const Icon(Icons.notifications_outlined),
                   onPressed: () {
-                    // TODO: Show notifications
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Notifications coming soon!'),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
                   },
                 ),
               ],
@@ -263,7 +268,8 @@ class _DailyAyahCard extends ConsumerWidget {
               IconButton(
                 icon: const Icon(Icons.share, color: Colors.white),
                 onPressed: () {
-                  // TODO: Share ayah
+                  final shareText = '${ayah.text}\n\n"${ayah.translation ?? ''}"\n\n- Surah ${Helpers.getSurahName(ayah.surahNumber)} ${ayah.surahNumber}:${ayah.numberInSurah}\n\nShared from Taqwa AI';
+                  Helpers.shareText(shareText);
                 },
               ),
             ],

@@ -89,7 +89,12 @@ class _AskAiScreenState extends ConsumerState<AskAiScreen> {
             icon: const Icon(Icons.history),
             tooltip: 'History',
             onPressed: () {
-              // TODO: Show conversation history
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Conversation history coming soon!'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
             },
           ),
         ],

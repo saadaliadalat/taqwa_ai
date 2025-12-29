@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 
 /// Helper utilities
 class Helpers {
@@ -139,6 +140,11 @@ class Helpers {
         behavior: SnackBarBehavior.floating,
       ),
     );
+  }
+
+  /// Share text content
+  static Future<void> shareText(String text) async {
+    await Share.share(text);
   }
 
   /// Validate email
