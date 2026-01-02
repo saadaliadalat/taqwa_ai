@@ -10,8 +10,6 @@ import '../models/surah_model.dart';
 /// API Service - Works with free external APIs
 class ApiService {
   // Gemini API
-  static const String _geminiApiKey = 'AIzaSyDWw2Dy14i9vPiTt10RQjsWmgIMSfzTKeQ';
-  static const String _geminiApiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
   
   // Free Quran API
   static const String _quranApiUrl = 'https://api.alquran.cloud/v1';
@@ -451,4 +449,50 @@ class ApiException implements Exception {
 
   @override
   String toString() => message;
+=======
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
+class ApiService {
+  final String _baseUrl = 'https://api.groq.com/openai/v1/chat/completions';
+  
+  // Singleton pattern
+  static final ApiService _instance = ApiService._internal();
+  factory ApiService() => _instance;
+  ApiService._internal();
+
+  String get _apiKey => dotenv.env['GROQ_API_KEY'] ?? '';
+
+  Future<String> sendMessage(String message) async {
+    if (_apiKey.isEmpty) {
+      throw Exception('GROQ_API_KEY is not set in .env file');
+    }
+
+    try {
+      final response = await http.post(
+        Uri.parse(_baseUrl),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_apiKey',
+        },
+        body: jsonEncode({
+          'model': 'llama-3.3-70b-versatile',
+          'messages': [
+            {'role': 'user', 'content': message}
+          ],
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['choices'][0]['message']['content'];
+      } else {
+        throw Exception('Failed to load response: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+>>>>>>> 087f08f (feat: Initialize Flutter project with core dependencies, environment setup, Groq API service, and app bootstrapping.)
 }
