@@ -73,6 +73,8 @@ class _AskAiScreenState extends ConsumerState<AskAiScreen> {
     return Scaffold(
       backgroundColor: theme.colorScheme.background,
       appBar: AppBar(
+        scrolledUnderElevation: 0,
+        centerTitle: true,
         title: Text(
           'Ask Taqwa AI',
           style: AppTypography.titleLarge(
@@ -81,12 +83,12 @@ class _AskAiScreenState extends ConsumerState<AskAiScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.add),
+            icon: const Icon(Icons.add_circle_outline),
             tooltip: 'New Conversation',
             onPressed: _startNewConversation,
           ),
           IconButton(
-            icon: const Icon(Icons.history),
+            icon: const Icon(Icons.history_rounded),
             tooltip: 'History',
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -170,10 +172,52 @@ class _AskAiScreenState extends ConsumerState<AskAiScreen> {
 }
 
 /// Empty conversation placeholder
-class _EmptyConversation extends StatelessWidget {
+class _EmptyConversation extends StatefulWidget {
   final void Function(String question)? onQuestionTap;
   
   const _EmptyConversation({this.onQuestionTap});
+
+  @override
+  State<_EmptyConversation> createState() => _EmptyConversationState();
+}
+
+class _EmptyConversationState extends State<_EmptyConversation> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+    );
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.1),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+    
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  final List<String> _suggestions = [
+    'What does the Quran say about patience?',
+    'How to perform Wudu correctly?',
+    'What are the pillars of Islam?',
+    'Virtues of Ramadan',
+    'Supplication for knowledge',
+    'Rights of parents in Islam',
+  ];
   
   @override
   Widget build(BuildContext context) {
@@ -181,121 +225,118 @@ class _EmptyConversation extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.auto_awesome,
-                size: 48,
-                color: AppColors.primary,
-              ),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: SlideTransition(
+            position: _slideAnimation,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        AppColors.primary.withOpacity(0.2),
+                        AppColors.primary.withOpacity(0.05),
+                      ],
+                    ),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.auto_awesome,
+                    size: 40,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'Bismillah',
+                  style: AppTypography.bismillah(color: AppColors.primary).copyWith(fontSize: 32),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'How can I help you today?',
+                  style: AppTypography.headlineSmall(
+                    color: isDark 
+                        ? AppColors.darkTextPrimary 
+                        : AppColors.textPrimary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Ask about Quran, Hadith, or Fiqh',
+                  style: AppTypography.bodyMedium(
+                    color: isDark 
+                        ? AppColors.darkTextSecondary 
+                        : AppColors.textSecondary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 32),
+                
+                // Suggestions Wrap
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 12,
+                  alignment: WrapAlignment.center,
+                  children: _suggestions.map((question) => _SuggestionChip(
+                    label: question,
+                    onTap: () => widget.onQuestionTap?.call(question),
+                  )).toList(),
+                ),
+              ],
             ),
-            const SizedBox(height: 24),
-            Text(
-              'Bismillah',
-              style: AppTypography.arabicTitle(color: AppColors.primary),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Ask me anything about Islam',
-              style: AppTypography.titleMedium(
-                color: isDark 
-                    ? AppColors.darkTextPrimary 
-                    : AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'I can help with Quran, Hadith, fiqh, and spiritual guidance',
-              style: AppTypography.bodyMedium(
-                color: isDark 
-                    ? AppColors.darkTextSecondary 
-                    : AppColors.textSecondary,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 32),
-            
-            // Example questions
-            _ExampleQuestion(
-              text: 'What does the Quran say about patience?',
-              onTap: () => onQuestionTap?.call('What does the Quran say about patience?'),
-            ),
-            const SizedBox(height: 12),
-            _ExampleQuestion(
-              text: 'How to perform Wudu correctly?',
-              onTap: () => onQuestionTap?.call('How to perform Wudu correctly?'),
-            ),
-            const SizedBox(height: 12),
-            _ExampleQuestion(
-              text: 'What are the pillars of Islam?',
-              onTap: () => onQuestionTap?.call('What are the pillars of Islam?'),
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
 }
 
-/// Example question chip
-class _ExampleQuestion extends StatelessWidget {
-  final String text;
-  final VoidCallback? onTap;
+/// Suggestion chip
+class _SuggestionChip extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
 
-  const _ExampleQuestion({required this.text, this.onTap});
+  const _SuggestionChip({required this.label, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-
+    
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(20),
       child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
           color: isDark ? AppColors.darkCard : AppColors.lightCard,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(24),
           border: Border.all(
             color: isDark ? AppColors.darkBorder : AppColors.border,
+            width: 1,
           ),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              Icons.chat_bubble_outline,
-              size: 18,
-              color: AppColors.primary,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                text,
-                style: AppTypography.bodyMedium(
-                  color: isDark 
-                      ? AppColors.darkTextPrimary 
-                      : AppColors.textPrimary,
-                ),
-              ),
-            ),
-            Icon(
-              Icons.arrow_forward_ios,
-              size: 14,
-              color: AppColors.primary,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
             ),
           ],
+        ),
+        child: Text(
+          label,
+          style: AppTypography.bodySmall(
+            color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+          ),
         ),
       ),
     );
@@ -374,65 +415,71 @@ class _MessageInput extends StatelessWidget {
         left: 16,
         right: 16,
         top: 12,
-        bottom: MediaQuery.of(context).padding.bottom + 12,
+        bottom: MediaQuery.of(context).padding.bottom + 12, // Keep some spacing
       ),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : AppColors.lightCard,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -5),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: controller,
-              maxLines: 4,
-              minLines: 1,
-              textCapitalization: TextCapitalization.sentences,
-              decoration: InputDecoration(
-                hintText: 'Ask a question...',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24),
-                  borderSide: BorderSide.none,
+      alignment: Alignment.bottomCenter,
+      child: Container(
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.darkCard : AppColors.lightCard,
+          borderRadius: BorderRadius.circular(32),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        child: Row(
+          children: [
+             const SizedBox(width: 12),
+            Expanded(
+              child: TextField(
+                controller: controller,
+                maxLines: 4,
+                minLines: 1,
+                textCapitalization: TextCapitalization.sentences,
+                style: AppTypography.bodyMedium(
+                  color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
                 ),
-                filled: true,
-                fillColor: isDark 
-                    ? AppColors.darkSurface 
-                    : AppColors.lightSurface,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 12,
+                decoration: InputDecoration(
+                  hintText: 'Ask a question...',
+                  hintStyle: AppTypography.bodyMedium(
+                     color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                  ),
+                  border: InputBorder.none,
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 0,
+                    vertical: 8,
+                  ),
                 ),
+                onSubmitted: (_) => onSend(),
               ),
-              onSubmitted: (_) => onSend(),
             ),
-          ),
-          const SizedBox(width: 12),
-          Container(
-            decoration: BoxDecoration(
-              color: AppColors.primary,
-              shape: BoxShape.circle,
+            const SizedBox(width: 8),
+            Container(
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF285C4D) : AppColors.primary, // Darker Green for Dark Mode
+                shape: BoxShape.circle,
+              ),
+              child: IconButton(
+                icon: isSending
+                    ? SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : const Icon(Icons.arrow_upward_rounded, color: Colors.white, size: 24),
+                onPressed: isSending ? null : onSend,
+              ),
             ),
-            child: IconButton(
-              icon: isSending
-                  ? SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      ),
-                    )
-                  : const Icon(Icons.send, color: Colors.white),
-              onPressed: isSending ? null : onSend,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

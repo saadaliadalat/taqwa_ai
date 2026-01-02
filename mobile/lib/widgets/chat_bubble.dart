@@ -122,13 +122,27 @@ class _AssistantBubble extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: isDark ? AppColors.aiBubbleDark : AppColors.aiBubble,
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: isDark 
+                      ? [AppColors.aiBubbleDark, const Color(0xFF2C4A40)] 
+                      : [AppColors.aiBubble, const Color(0xFFF7F9F8)],
+                ),
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(4),
-                  topRight: Radius.circular(20),
-                  bottomLeft: Radius.circular(20),
-                  bottomRight: Radius.circular(20),
+                  topRight: Radius.circular(24),
+                  bottomLeft: Radius.circular(24),
+                  bottomRight: Radius.circular(24),
                 ),
+                boxShadow: [
+                   if (!isDark)
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.02),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1),
+                    ),
+                ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -177,16 +191,16 @@ class _AssistantBubble extends StatelessWidget {
                   children: [
                     if (onCopy != null)
                       _ActionButton(
-                        icon: Icons.copy_outlined,
+                        icon: Icons.copy_rounded,
                         label: 'Copy',
                         onTap: onCopy!,
                       ),
                     if (onSave != null) ...[
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 12),
                       _ActionButton(
                         icon: message.isSaved 
-                            ? Icons.bookmark 
-                            : Icons.bookmark_outline,
+                            ? Icons.bookmark_rounded
+                            : Icons.bookmark_outline_rounded,
                         label: message.isSaved ? 'Saved' : 'Save',
                         onTap: onSave!,
                         isActive: message.isSaved,
