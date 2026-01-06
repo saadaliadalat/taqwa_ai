@@ -2,14 +2,16 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/message_model.dart';
 import '../models/hadith_model.dart';
 import '../models/ayah_model.dart';
 import '../models/surah_model.dart';
 
-/// API Service - Works with free external APIs
+/// API Service - Works with Groq API and free external APIs
 class ApiService {
-  // Gemini API
+  // Groq API (using Llama 3.3)
+  static const String _groqApiUrl = 'https://api.groq.com/openai/v1/chat/completions';
   
   // Free Quran API
   static const String _quranApiUrl = 'https://api.alquran.cloud/v1';
@@ -18,6 +20,9 @@ class ApiService {
   static const Duration _timeout = Duration(seconds: 60);
   
   String? _authToken;
+
+  // Get Groq API key from environment
+  String get _groqApiKey => dotenv.env['GROQ_API_KEY'] ?? '';
 
   /// Set auth token for authenticated requests
   void setAuthToken(String? token) {
@@ -37,7 +42,7 @@ class ApiService {
   }
 
   // ============================================
-  // AI Chat - REAL Gemini API
+  // AI Chat - Groq API with Llama 3.3
   // ============================================
 
   /// System prompt for Islamic AI assistant
@@ -53,7 +58,7 @@ class ApiService {
 
 Remember: You are a helpful assistant, not a mufti. Always recommend consulting local scholars for fatwa-level questions.''';
 
-  /// Ask a question to Gemini AI
+  /// Ask a question to Groq AI (Llama 3.3)
   Future<MessageModel> askAi({
     required String question,
     required String conversationId,
@@ -61,66 +66,51 @@ Remember: You are a helpful assistant, not a mufti. Always recommend consulting 
     String? madhhab,
   }) async {
     try {
+      if (_groqApiKey.isEmpty) {
+        return MessageModel(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          conversationId: conversationId,
+          role: 'assistant',
+          content: 'API key not configured. Please add your GROQ_API_KEY to the .env file.',
+          createdAt: DateTime.now(),
+        );
+      }
+
       final prompt = _buildPrompt(question, context, madhhab);
       
       final response = await http.post(
-        Uri.parse('$_geminiApiUrl?key=$_geminiApiKey'),
-        headers: {'Content-Type': 'application/json'},
+        Uri.parse(_groqApiUrl),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_groqApiKey',
+        },
         body: jsonEncode({
-          'contents': [
-            {
-              'parts': [
-                {'text': prompt}
-              ]
-            }
+          'model': 'llama-3.3-70b-versatile',
+          'messages': [
+            {'role': 'system', 'content': _systemPrompt},
+            {'role': 'user', 'content': prompt}
           ],
-          'generationConfig': {
-            'temperature': 0.7,
-            'topK': 40,
-            'topP': 0.95,
-            'maxOutputTokens': 1024,
-          },
-          'safetySettings': [
-            {
-              'category': 'HARM_CATEGORY_HARASSMENT',
-              'threshold': 'BLOCK_MEDIUM_AND_ABOVE'
-            },
-            {
-              'category': 'HARM_CATEGORY_HATE_SPEECH',
-              'threshold': 'BLOCK_MEDIUM_AND_ABOVE'
-            },
-            {
-              'category': 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
-              'threshold': 'BLOCK_MEDIUM_AND_ABOVE'
-            },
-            {
-              'category': 'HARM_CATEGORY_DANGEROUS_CONTENT',
-              'threshold': 'BLOCK_MEDIUM_AND_ABOVE'
-            },
-          ],
+          'temperature': 0.7,
+          'max_tokens': 1024,
         }),
       ).timeout(_timeout);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
-        final candidates = data['candidates'] as List<dynamic>?;
+        final choices = data['choices'] as List<dynamic>?;
         
-        if (candidates != null && candidates.isNotEmpty) {
-          final candidate = candidates[0] as Map<String, dynamic>;
-          final content = candidate['content'] as Map<String, dynamic>?;
-          final parts = content?['parts'] as List<dynamic>?;
+        if (choices != null && choices.isNotEmpty) {
+          final choice = choices[0] as Map<String, dynamic>;
+          final message = choice['message'] as Map<String, dynamic>?;
+          final text = message?['content'] as String? ?? 'No response generated.';
           
-          if (parts != null && parts.isNotEmpty) {
-            final text = parts[0]['text'] as String? ?? 'No response generated.';
-            
-            return MessageModel(
-              id: DateTime.now().millisecondsSinceEpoch.toString(),
-              conversationId: conversationId,
-              role: 'assistant',
-              content: text,
-              createdAt: DateTime.now(),
-            );
-          }
+          return MessageModel(
+            id: DateTime.now().millisecondsSinceEpoch.toString(),
+            conversationId: conversationId,
+            role: 'assistant',
+            content: text,
+            createdAt: DateTime.now(),
+          );
         }
         
         // Fallback if parsing fails
@@ -162,8 +152,6 @@ Remember: You are a helpful assistant, not a mufti. Always recommend consulting 
 
   String _buildPrompt(String question, String? context, String? madhhab) {
     final buffer = StringBuffer();
-    buffer.writeln(_systemPrompt);
-    buffer.writeln();
     
     if (madhhab != null && madhhab.isNotEmpty) {
       buffer.writeln('The user follows the $madhhab school of thought (madhab). Consider this when applicable.');
@@ -449,50 +437,4 @@ class ApiException implements Exception {
 
   @override
   String toString() => message;
-=======
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-
-class ApiService {
-  final String _baseUrl = 'https://api.groq.com/openai/v1/chat/completions';
-  
-  // Singleton pattern
-  static final ApiService _instance = ApiService._internal();
-  factory ApiService() => _instance;
-  ApiService._internal();
-
-  String get _apiKey => dotenv.env['GROQ_API_KEY'] ?? '';
-
-  Future<String> sendMessage(String message) async {
-    if (_apiKey.isEmpty) {
-      throw Exception('GROQ_API_KEY is not set in .env file');
-    }
-
-    try {
-      final response = await http.post(
-        Uri.parse(_baseUrl),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $_apiKey',
-        },
-        body: jsonEncode({
-          'model': 'llama-3.3-70b-versatile',
-          'messages': [
-            {'role': 'user', 'content': message}
-          ],
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        return data['choices'][0]['message']['content'];
-      } else {
-        throw Exception('Failed to load response: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Error: $e');
-    }
-  }
->>>>>>> 087f08f (feat: Initialize Flutter project with core dependencies, environment setup, Groq API service, and app bootstrapping.)
 }
