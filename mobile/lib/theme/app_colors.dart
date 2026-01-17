@@ -1,185 +1,264 @@
 import 'package:flutter/material.dart';
 
-/// Taqwa AI Design System - Colors
+/// Taqwa AI Design System - Premium Colors
 /// 
-/// A calm, respectful color palette designed for Islamic aesthetics.
-/// Supports both light and dark themes with RTL compatibility.
+/// A sophisticated, calm color palette designed for Islamic aesthetics.
+/// Deep emerald greens with warm gold accents create a premium, trustworthy feel.
 class AppColors {
   AppColors._();
+
+  // ============================================
+  // Primary Brand Colors - Deep Emerald
+  // ============================================
+  
+  /// Primary brand color - Deep emerald green
+  static const Color primary = Color(0xFF0D5A3C);
+  
+  /// Primary light - softer emerald for hover states
+  static const Color primaryLight = Color(0xFF1A7A54);
+  
+  /// Primary dark - deeper for pressed states
+  static const Color primaryDark = Color(0xFF084228);
+  
+  /// Primary surface - very subtle green tint
+  static const Color primarySurface = Color(0xFFE8F5EE);
+
+  // ============================================
+  // Secondary - Premium Gold Accents
+  // ============================================
+  
+  /// Gold accent - for premium elements and highlights
+  static const Color gold = Color(0xFFD4AF37);
+  
+  /// Secondary color alias (same as gold for backwards compatibility)
+  static const Color secondary = gold;
+  
+  /// Gold light - softer gold
+  static const Color goldLight = Color(0xFFE4C767);
+  
+  /// Gold dark - deeper gold
+  static const Color goldDark = Color(0xFFB8972E);
+  
+  /// Gold muted - for subtle accents
+  static const Color goldMuted = Color(0xFFC9B896);
 
   // ============================================
   // Light Theme Colors
   // ============================================
   
-  /// Light theme background - warm off-white
-  static const Color lightBackground = Color(0xFFFAFAF7);
+  /// Light background - warm off-white
+  static const Color lightBackground = Color(0xFFFAFAF8);
   
-  /// Light theme surface - slightly darker for cards
+  /// Light surface - slightly warm
   static const Color lightSurface = Color(0xFFF5F5F2);
   
-  /// Light theme card background
+  /// Light card - pure white with softness
   static const Color lightCard = Color(0xFFFFFFFF);
+  
+  /// Light card elevated - subtle shadow
+  static const Color lightCardElevated = Color(0xFFFDFDFD);
 
   // ============================================
-  // Dark Theme Colors
+  // Dark Theme Colors - Deep Islamic Greens
   // ============================================
   
-  /// Dark theme background - deep forest green-black
-  static const Color darkBackground = Color(0xFF0F1F1A);
+  /// Dark background - deep forest
+  static const Color darkBackground = Color(0xFF0A1F17);
   
-  /// Dark theme surface - slightly lighter for cards
-  static const Color darkSurface = Color(0xFF1A2F28);
+  /// Dark surface - slightly lighter
+  static const Color darkSurface = Color(0xFF122B21);
   
-  /// Dark theme card background
-  static const Color darkCard = Color(0xFF243D34);
-
-  // ============================================
-  // Primary & Accent Colors
-  // ============================================
+  /// Dark card - elevated surface
+  static const Color darkCard = Color(0xFF1A3D2E);
   
-  /// Primary accent - Islamic green
-  static const Color primary = Color(0xFF1F7A5A);
+  /// Dark card elevated - even lighter
+  static const Color darkCardElevated = Color(0xFF234F3D);
   
-  /// Primary light variant
-  static const Color primaryLight = Color(0xFF2E9B75);
+  /// Dark header gradient start
+  static const Color darkHeaderStart = Color(0xFF0D5A3C);
   
-  /// Primary dark variant
-  static const Color primaryDark = Color(0xFF165A42);
-  
-  /// Secondary accent - warm gold
-  static const Color secondary = Color(0xFFC2A14D);
-  
-  /// Secondary light variant
-  static const Color secondaryLight = Color(0xFFD4B76A);
-  
-  /// Secondary dark variant
-  static const Color secondaryDark = Color(0xFFA88A3D);
+  /// Dark header gradient end
+  static const Color darkHeaderEnd = Color(0xFF084228);
 
   // ============================================
   // Text Colors
   // ============================================
   
-  /// Primary text color - near black
-  static const Color textPrimary = Color(0xFF1A1A1A);
+  /// Primary text - near black
+  static const Color textPrimary = Color(0xFF1A1D1C);
   
-  /// Secondary text color - muted gray
-  static const Color textSecondary = Color(0xFF6B6B6B);
+  /// Secondary text - muted
+  static const Color textSecondary = Color(0xFF5A6660);
   
-  /// Tertiary text color - light gray
-  static const Color textTertiary = Color(0xFF9A9A9A);
+  /// Tertiary text - subtle
+  static const Color textTertiary = Color(0xFF8A9690);
   
-  /// Text on primary color
+  /// Text on primary surfaces
   static const Color textOnPrimary = Color(0xFFFFFFFF);
   
-  /// Text on secondary color
-  static const Color textOnSecondary = Color(0xFF1A1A1A);
+  /// Text on gold surfaces
+  static const Color textOnGold = Color(0xFF1A1D1C);
   
-  /// Light theme text colors
-  static const Color lightTextPrimary = Color(0xFF1A1A1A);
-  static const Color lightTextSecondary = Color(0xFF6B6B6B);
-  
-  /// Dark theme text colors
-  static const Color darkTextPrimary = Color(0xFFF5F5F2);
-  static const Color darkTextSecondary = Color(0xFFB0B0A8);
+  /// Dark theme text
+  static const Color darkTextPrimary = Color(0xFFF5F7F6);
+  static const Color darkTextSecondary = Color(0xFFB0BAB5);
+  static const Color darkTextTertiary = Color(0xFF7A8A84);
 
   // ============================================
   // Semantic Colors
   // ============================================
   
-  /// Error color - muted red
-  static const Color error = Color(0xFF8B2E2E);
+  /// Error - muted red
+  static const Color error = Color(0xFFB34040);
+  static const Color errorLight = Color(0xFFE57373);
+  static const Color errorSurface = Color(0xFFFDECEC);
   
-  /// Error light variant
-  static const Color errorLight = Color(0xFFB54545);
+  /// Success - natural green
+  static const Color success = Color(0xFF2E7D52);
+  static const Color successLight = Color(0xFF4CAF7A);
+  static const Color successSurface = Color(0xFFE8F5EE);
   
-  /// Success color - muted green
-  static const Color success = Color(0xFF2E6B4F);
+  /// Warning - warm amber
+  static const Color warning = Color(0xFFD4940C);
+  static const Color warningLight = Color(0xFFFFB74D);
+  static const Color warningSurface = Color(0xFFFFF8E6);
   
-  /// Warning color - muted amber
-  static const Color warning = Color(0xFFB8860B);
-  
-  /// Info color - muted blue
-  static const Color info = Color(0xFF4A6B8A);
+  /// Info - calm blue
+  static const Color info = Color(0xFF3A7CA5);
+  static const Color infoLight = Color(0xFF64B5F6);
+  static const Color infoSurface = Color(0xFFE8F4FD);
 
   // ============================================
   // UI Element Colors
   // ============================================
   
-  /// Divider color
-  static const Color divider = Color(0xFFE5E5E0);
+  /// Divider - subtle separation
+  static const Color divider = Color(0xFFE8EBE9);
+  static const Color darkDivider = Color(0xFF2D4A3D);
   
-  /// Dark theme divider
-  static const Color darkDivider = Color(0xFF3A4F47);
+  /// Border - component edges
+  static const Color border = Color(0xFFD5DCD8);
+  static const Color darkBorder = Color(0xFF3A5548);
   
-  /// Border color
-  static const Color border = Color(0xFFD5D5D0);
+  /// Disabled state
+  static const Color disabled = Color(0xFFB5BDB9);
   
-  /// Dark theme border
-  static const Color darkBorder = Color(0xFF4A5F57);
-  
-  /// Disabled state color
-  static const Color disabled = Color(0xFFBDBDB8);
-  
-  /// Shimmer base color
-  static const Color shimmerBase = Color(0xFFE8E8E4);
-  
-  /// Shimmer highlight color
-  static const Color shimmerHighlight = Color(0xFFF5F5F2);
+  /// Shimmer colors
+  static const Color shimmerBase = Color(0xFFE8EBE9);
+  static const Color shimmerHighlight = Color(0xFFF5F7F6);
+  static const Color darkShimmerBase = Color(0xFF1A3D2E);
+  static const Color darkShimmerHighlight = Color(0xFF234F3D);
 
   // ============================================
   // Special Purpose Colors
   // ============================================
   
-  /// Quran text background - slightly warm
+  /// Quran text background
   static const Color quranBackground = Color(0xFFFFFEFC);
+  static const Color quranBackgroundDark = Color(0xFF162E24);
   
-  /// Quran text background dark
-  static const Color quranBackgroundDark = Color(0xFF1A2A24);
-  
-  /// Hadith highlight color
-  static const Color hadithHighlight = Color(0xFFFFF8E7);
-  
-  /// Hadith highlight dark
+  /// Hadith highlight
+  static const Color hadithHighlight = Color(0xFFFFF9E8);
   static const Color hadithHighlightDark = Color(0xFF2A2A1F);
   
-  /// AI response bubble
-  static const Color aiBubble = Color(0xFFF0F4F2);
+  /// AI bubble colors
+  static const Color aiBubble = Color(0xFFF0F5F2);
+  static const Color aiBubbleDark = Color(0xFF1A3D2E);
   
-  /// AI response bubble dark
-  static const Color aiBubbleDark = Color(0xFF243D34);
+  /// User bubble
+  static const Color userBubble = Color(0xFF0D5A3C);
   
-  /// User message bubble
-  static const Color userBubble = Color(0xFF1F7A5A);
+  /// Prayer time colors
+  static const Color prayerFajr = Color(0xFF5C6BC0);
+  static const Color prayerSunrise = Color(0xFFFFB74D);
+  static const Color prayerDhuhr = Color(0xFFFFD54F);
+  static const Color prayerAsr = Color(0xFFFF8A65);
+  static const Color prayerMaghrib = Color(0xFFE57373);
+  static const Color prayerIsha = Color(0xFF7986CB);
 
   // ============================================
-  // Gradient Definitions
+  // Premium Gradients
   // ============================================
   
-  /// Primary gradient
-  static const LinearGradient primaryGradient = LinearGradient(
+  /// Primary header gradient - signature look
+  static const LinearGradient headerGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [primary, primaryLight],
+    colors: [
+      Color(0xFF0D5A3C),
+      Color(0xFF084228),
+    ],
   );
   
-  /// Gold gradient for special elements
+  /// Primary header gradient with more depth
+  static const LinearGradient headerGradientDeep = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [
+      Color(0xFF0D5A3C),
+      Color(0xFF063321),
+    ],
+  );
+  
+  /// Card subtle gradient
+  static const LinearGradient cardGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [
+      Color(0xFF1A7A54),
+      Color(0xFF0D5A3C),
+    ],
+  );
+  
+  /// Gold premium gradient
   static const LinearGradient goldGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [secondary, secondaryLight],
+    colors: [
+      Color(0xFFE4C767),
+      Color(0xFFD4AF37),
+      Color(0xFFB8972E),
+    ],
   );
   
-  /// Subtle background gradient for light theme
-  static const LinearGradient lightBackgroundGradient = LinearGradient(
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-    colors: [lightBackground, lightSurface],
+  /// Subtle shimmer gradient for premium feel
+  static const LinearGradient shimmerGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [
+      Color(0x10FFFFFF),
+      Color(0x20FFFFFF),
+      Color(0x10FFFFFF),
+    ],
   );
   
-  /// Subtle background gradient for dark theme
+  /// Dark background gradient
   static const LinearGradient darkBackgroundGradient = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [darkBackground, darkSurface],
+    colors: [
+      Color(0xFF0A1F17),
+      Color(0xFF0F2A20),
+    ],
+  );
+  
+  /// Light background gradient
+  static const LinearGradient lightBackgroundGradient = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [
+      Color(0xFFFAFAF8),
+      Color(0xFFF5F5F2),
+    ],
+  );
+  
+  /// Glassmorphism overlay
+  static const LinearGradient glassOverlay = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [
+      Color(0x15FFFFFF),
+      Color(0x08FFFFFF),
+    ],
   );
 }

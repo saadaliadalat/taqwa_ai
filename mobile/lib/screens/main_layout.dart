@@ -1,39 +1,138 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_typography.dart';
+import '../theme/app_decorations.dart';
 import '../widgets/offline_banner.dart';
 import 'home/home_screen.dart';
 import 'ask_ai/ask_ai_screen.dart';
 import 'quran/quran_screen.dart';
+import 'community/community_screen.dart';
 import 'profile/profile_screen.dart';
 
 /// Tab index provider for navigation between tabs
 final tabIndexProvider = StateProvider<int>((ref) => 0);
 
-/// Main app layout with bottom navigation
-class MainLayout extends ConsumerWidget {
+/// Premium Main Layout with 5-tab bottom navigation
+/// 
+/// Features glassmorphism navigation bar with smooth animations
+class MainLayout extends ConsumerStatefulWidget {
   const MainLayout({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MainLayout> createState() => _MainLayoutState();
+}
+
+class _MainLayoutState extends ConsumerState<MainLayout>
+    with TickerProviderStateMixin {
+  late List<AnimationController> _iconControllers;
+  late PageController _pageController;
+
+  final List<_NavItem> _navItems = [
+    _NavItem(
+      icon: Icons.home_outlined,
+      activeIcon: Icons.home_rounded,
+      label: 'Home',
+    ),
+    _NavItem(
+      icon: Icons.auto_awesome_outlined,
+      activeIcon: Icons.auto_awesome,
+      label: 'Chat',
+    ),
+    _NavItem(
+      icon: Icons.menu_book_outlined,
+      activeIcon: Icons.menu_book_rounded,
+      label: 'Quran',
+    ),
+    _NavItem(
+      icon: Icons.people_outline_rounded,
+      activeIcon: Icons.people_rounded,
+      label: 'Community',
+    ),
+    _NavItem(
+      icon: Icons.person_outline_rounded,
+      activeIcon: Icons.person_rounded,
+      label: 'Profile',
+    ),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+    _iconControllers = List.generate(
+      _navItems.length,
+      (index) => AnimationController(
+        duration: const Duration(milliseconds: 200),
+        vsync: this,
+      ),
+    );
+    // Start with first tab animated
+    _iconControllers[0].forward();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    for (final controller in _iconControllers) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  void _onTabTapped(int index) {
+    final currentIndex = ref.read(tabIndexProvider);
+    
+    // Animate icons
+    _iconControllers[currentIndex].reverse();
+    _iconControllers[index].forward();
+    
+    // Update state
+    ref.read(tabIndexProvider.notifier).state = index;
+    
+    // Navigate page
+    _pageController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+    
+    // Haptic feedback
+    HapticFeedback.lightImpact();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final currentIndex = ref.watch(tabIndexProvider);
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
 
-    final List<Widget> screens = const [
-      HomeScreen(),
-      AskAiScreen(),
-      QuranScreen(),
-      ProfileScreen(),
-    ];
+    // Update system UI based on theme
+    SystemChrome.setSystemUIOverlayStyle(
+      SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+        systemNavigationBarColor: isDark ? AppColors.darkCard : AppColors.lightCard,
+        systemNavigationBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+      ),
+    );
 
     return Scaffold(
       body: Stack(
         children: [
-          // Main content
-          IndexedStack(
-            index: currentIndex,
-            children: screens,
+          // Main content pages
+          PageView(
+            controller: _pageController,
+            physics: const NeverScrollableScrollPhysics(),
+            children: const [
+              HomeScreen(),
+              AskAiScreen(),
+              QuranScreen(),
+              CommunityScreen(),
+              ProfileScreen(),
+            ],
           ),
           
           // Offline banner at top
@@ -45,52 +144,42 @@ class MainLayout extends ConsumerWidget {
           ),
         ],
       ),
+      
+      // Premium bottom navigation
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: isDark ? AppColors.darkCard : AppColors.lightCard,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(28),
+            topRight: Radius.circular(28),
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, -5),
+              color: Colors.black.withOpacity(isDark ? 0.4 : 0.08),
+              blurRadius: 24,
+              offset: const Offset(0, -4),
             ),
           ],
         ),
         child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          top: false,
+          child: Container(
+            height: 72,
+            padding: const EdgeInsets.symmetric(horizontal: 8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _NavItem(
-                  icon: Icons.home_outlined,
-                  activeIcon: Icons.home,
-                  label: 'Home',
-                  isSelected: currentIndex == 0,
-                  onTap: () => ref.read(tabIndexProvider.notifier).state = 0,
-                ),
-                _NavItem(
-                  icon: Icons.auto_awesome_outlined,
-                  activeIcon: Icons.auto_awesome,
-                  label: 'Ask',
-                  isSelected: currentIndex == 1,
-                  onTap: () => ref.read(tabIndexProvider.notifier).state = 1,
-                ),
-                _NavItem(
-                  icon: Icons.menu_book_outlined,
-                  activeIcon: Icons.menu_book,
-                  label: 'Quran',
-                  isSelected: currentIndex == 2,
-                  onTap: () => ref.read(tabIndexProvider.notifier).state = 2,
-                ),
-                _NavItem(
-                  icon: Icons.person_outline,
-                  activeIcon: Icons.person,
-                  label: 'Profile',
-                  isSelected: currentIndex == 3,
-                  onTap: () => ref.read(tabIndexProvider.notifier).state = 3,
-                ),
-              ],
+              children: List.generate(_navItems.length, (index) {
+                final item = _navItems[index];
+                final isSelected = currentIndex == index;
+                
+                return _AnimatedNavItem(
+                  item: item,
+                  isSelected: isSelected,
+                  controller: _iconControllers[index],
+                  onTap: () => _onTabTapped(index),
+                  isDark: isDark,
+                );
+              }),
             ),
           ),
         ),
@@ -99,62 +188,112 @@ class MainLayout extends ConsumerWidget {
   }
 }
 
-/// Navigation item widget
-class _NavItem extends StatelessWidget {
+class _NavItem {
   final IconData icon;
   final IconData activeIcon;
   final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
 
-  const _NavItem({
+  _NavItem({
     required this.icon,
     required this.activeIcon,
     required this.label,
+  });
+}
+
+class _AnimatedNavItem extends StatelessWidget {
+  final _NavItem item;
+  final bool isSelected;
+  final AnimationController controller;
+  final VoidCallback onTap;
+  final bool isDark;
+
+  const _AnimatedNavItem({
+    required this.item,
     required this.isSelected,
+    required this.controller,
     required this.onTap,
+    required this.isDark,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    
-    return InkWell(
+    return GestureDetector(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected 
-              ? AppColors.primary.withOpacity(0.1) 
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              isSelected ? activeIcon : icon,
-              color: isSelected 
-                  ? AppColors.primary 
-                  : theme.colorScheme.onSurfaceVariant,
-              size: 24,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedBuilder(
+        animation: controller,
+        builder: (context, child) {
+          final scale = 1.0 + (controller.value * 0.1);
+          
+          return Container(
+            width: 64,
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Icon with animation
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? AppColors.primary.withOpacity(0.12)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Transform.scale(
+                    scale: scale,
+                    child: Icon(
+                      isSelected ? item.activeIcon : item.icon,
+                      color: isSelected
+                          ? AppColors.primary
+                          : (isDark
+                              ? AppColors.darkTextSecondary
+                              : AppColors.textSecondary),
+                      size: 24,
+                    ),
+                  ),
+                ),
+                
+                const SizedBox(height: 4),
+                
+                // Label
+                AnimatedDefaultTextStyle(
+                  duration: const Duration(milliseconds: 200),
+                  style: AppTypography.labelSmall(
+                    color: isSelected
+                        ? AppColors.primary
+                        : (isDark
+                            ? AppColors.darkTextSecondary
+                            : AppColors.textSecondary),
+                  ).copyWith(
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                  ),
+                  child: Text(item.label),
+                ),
+              ],
             ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                color: isSelected 
-                    ? AppColors.primary 
-                    : theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
+  }
+}
+
+/// Helper widget for animated builders
+class AnimatedBuilder extends AnimatedWidget {
+  final Widget Function(BuildContext context, Widget? child) builder;
+  final Widget? child;
+
+  const AnimatedBuilder({
+    super.key,
+    required Animation<double> animation,
+    required this.builder,
+    this.child,
+  }) : super(listenable: animation);
+
+  @override
+  Widget build(BuildContext context) {
+    return builder(context, child);
   }
 }
