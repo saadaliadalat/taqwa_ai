@@ -33,6 +33,12 @@ class AppColors {
   /// Secondary color alias (same as gold for backwards compatibility)
   static const Color secondary = gold;
   
+  /// Text on secondary/gold background
+  static const Color textOnSecondary = Color(0xFF1A1A1A);
+  
+  /// Secondary light - softer gold variant (alias for goldLight)
+  static const Color secondaryLight = Color(0xFFE4C767);
+  
   /// Gold light - softer gold
   static const Color goldLight = Color(0xFFE4C767);
   

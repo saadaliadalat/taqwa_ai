@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
-import '../../theme/app_decorations.dart';
 import '../../providers/quran_provider.dart';
 import '../../models/surah_model.dart';
 import '../../widgets/loading_widget.dart';
@@ -50,8 +48,22 @@ class _QuranScreenState extends ConsumerState<QuranScreen>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final surahsAsync = ref.watch(surahsProvider);
-    final lastRead = ref.watch(lastReadProvider);
+    final quranState = ref.watch(quranProvider);
+    final lastReadPosition = ref.read(quranProvider.notifier).getLastReadPosition();
+
+    // Get last read surah if available
+    SurahModel? lastReadSurah;
+    if (lastReadPosition != null) {
+      final surahNumber = lastReadPosition['surahNumber'] as int?;
+      if (surahNumber != null) {
+        lastReadSurah = quranState.surahs.firstWhere(
+          (s) => s.number == surahNumber,
+          orElse: () => quranState.surahs.first,
+        );
+      }
+    }
+
+    final filteredSurahs = _filterSurahs(quranState.surahs);
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightBackground,
@@ -81,7 +93,7 @@ class _QuranScreenState extends ConsumerState<QuranScreen>
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
+                                  const Text(
                                     'القرآن الكريم',
                                     style: TextStyle(
                                       fontFamily: 'Amiri',
@@ -140,59 +152,51 @@ class _QuranScreenState extends ConsumerState<QuranScreen>
             ),
           ),
         ],
-        body: FadeTransition(
-          opacity: _fadeIn,
-          child: surahsAsync.when(
-            data: (surahs) {
-              final filteredSurahs = _filterSurahs(surahs);
-              
-              return CustomScrollView(
-                slivers: [
-                  // Last read card
-                  if (lastRead != null && _searchQuery.isEmpty)
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-                        child: _LastReadCard(
-                          surah: lastRead,
-                          isDark: isDark,
-                          onTap: () => _openSurah(context, lastRead),
+        body: quranState.isLoading
+            ? const Center(child: LoadingWidget())
+            : FadeTransition(
+                opacity: _fadeIn,
+                child: CustomScrollView(
+                  slivers: [
+                    // Last read card
+                    if (lastReadSurah != null && _searchQuery.isEmpty)
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+                          child: _LastReadCard(
+                            surah: lastReadSurah,
+                            isDark: isDark,
+                            onTap: () => _openSurah(context, lastReadSurah!),
+                          ),
+                        ),
+                      ),
+                    
+                    // Surah list
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      sliver: SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            final surah = filteredSurahs[index];
+                            return _SurahItem(
+                              surah: surah,
+                              isDark: isDark,
+                              index: index,
+                              onTap: () => _openSurah(context, surah),
+                            );
+                          },
+                          childCount: filteredSurahs.length,
                         ),
                       ),
                     ),
-                  
-                  // Surah list
-                  SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          final surah = filteredSurahs[index];
-                          return _SurahItem(
-                            surah: surah,
-                            isDark: isDark,
-                            index: index,
-                            onTap: () => _openSurah(context, surah),
-                          );
-                        },
-                        childCount: filteredSurahs.length,
-                      ),
+                    
+                    // Bottom padding
+                    const SliverToBoxAdapter(
+                      child: SizedBox(height: 100),
                     ),
-                  ),
-                  
-                  // Bottom padding
-                  const SliverToBoxAdapter(
-                    child: SizedBox(height: 100),
-                  ),
-                ],
-              );
-            },
-            loading: () => const Center(child: LoadingWidget()),
-            error: (e, _) => Center(
-              child: Text('Error loading surahs: $e'),
-            ),
-          ),
-        ),
+                  ],
+                ),
+              ),
       ),
     );
   }
@@ -264,7 +268,7 @@ class _QuranScreenState extends ConsumerState<QuranScreen>
   }
 
   void _openSurah(BuildContext context, SurahModel surah) {
-    ref.read(quranNotifierProvider.notifier).setLastRead(surah);
+    ref.read(quranProvider.notifier).loadSurah(surah.number);
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -328,7 +332,7 @@ class _LastReadCard extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.bookmark_rounded,
                         color: AppColors.gold,
                         size: 16,
@@ -346,7 +350,7 @@ class _LastReadCard extends StatelessWidget {
                     style: AppTypography.titleMedium(color: Colors.white),
                   ),
                   Text(
-                    '${surah.ayahCount} Ayahs • ${surah.revelationType}',
+                    '${surah.numberOfAyahs} Ayahs • ${surah.revelationType}',
                     style: AppTypography.bodySmall(
                       color: Colors.white.withOpacity(0.8),
                     ),
@@ -358,7 +362,7 @@ class _LastReadCard extends StatelessWidget {
             // Arabic name
             Text(
               surah.name,
-              style: TextStyle(
+              style: const TextStyle(
                 fontFamily: 'Amiri',
                 fontSize: 24,
                 color: Colors.white,
@@ -455,7 +459,7 @@ class _SurahItem extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '${surah.ayahCount} Ayahs • ${surah.revelationType}',
+                          '${surah.numberOfAyahs} Ayahs • ${surah.revelationType}',
                           style: AppTypography.bodySmall(
                             color: isDark 
                                 ? AppColors.darkTextSecondary 
