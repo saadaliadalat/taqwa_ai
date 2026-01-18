@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'theme/app_theme.dart';
 import 'providers/settings_provider.dart';
 import 'providers/auth_provider.dart';
@@ -40,7 +41,12 @@ class _TaqwaAIAppState extends ConsumerState<TaqwaAIApp> {
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
       
-      // Localization support
+      // Localization support with delegates for RTL
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       locale: _getLocale(settings.language),
       supportedLocales: const [
         Locale('en', 'US'),
@@ -50,14 +56,6 @@ class _TaqwaAIAppState extends ConsumerState<TaqwaAIApp> {
         Locale('id', 'ID'),
         Locale('ms', 'MY'),
       ],
-      
-      // Builder for RTL support
-      builder: (context, child) {
-        return Directionality(
-          textDirection: _getTextDirection(settings.language),
-          child: child ?? const SizedBox.shrink(),
-        );
-      },
       
       // Initial route determination
       home: authState.when(
@@ -90,17 +88,6 @@ class _TaqwaAIAppState extends ConsumerState<TaqwaAIApp> {
         return const Locale('ms', 'MY');
       default:
         return const Locale('en', 'US');
-    }
-  }
-
-  /// Get text direction from language
-  TextDirection _getTextDirection(String language) {
-    switch (language) {
-      case 'arabic':
-      case 'urdu':
-        return TextDirection.rtl;
-      default:
-        return TextDirection.ltr;
     }
   }
 }
