@@ -227,19 +227,20 @@ class _AnimatedNavItem extends StatelessWidget {
           
           return Container(
             width: 64,
-            padding: const EdgeInsets.symmetric(vertical: 8),
+            padding: const EdgeInsets.symmetric(vertical: 4),
             child: Column(
               mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 // Icon with animation
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: isSelected
                         ? AppColors.primary.withOpacity(0.12)
                         : Colors.transparent,
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Transform.scale(
                     scale: scale,
@@ -250,12 +251,12 @@ class _AnimatedNavItem extends StatelessWidget {
                           : (isDark
                               ? AppColors.darkTextSecondary
                               : AppColors.textSecondary),
-                      size: 24,
+                      size: 22,
                     ),
                   ),
                 ),
                 
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 
                 // Label
                 AnimatedDefaultTextStyle(
@@ -268,6 +269,7 @@ class _AnimatedNavItem extends StatelessWidget {
                             : AppColors.textSecondary),
                   ).copyWith(
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                    fontSize: 10,
                   ),
                   child: Text(item.label),
                 ),

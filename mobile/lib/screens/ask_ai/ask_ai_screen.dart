@@ -70,21 +70,22 @@ class _AskAiScreenState extends ConsumerState<AskAiScreen>
   }
 
   void _initConversation() async {
+    // Use Firebase user ID if available, otherwise use local guest ID
     final user = ref.read(authStateProvider).valueOrNull;
-    if (user != null) {
-      final conversations = ref.read(conversationsProvider);
-      if (conversations.conversations.isEmpty) {
-        final conversation = await ref
-            .read(conversationsProvider.notifier)
-            .createConversation(user.uid);
-        setState(() {
-          _currentConversationId = conversation.id;
-        });
-      } else {
-        setState(() {
-          _currentConversationId = conversations.conversations.first.id;
-        });
-      }
+    final userId = user?.uid ?? 'local_guest_user';
+    
+    final conversations = ref.read(conversationsProvider);
+    if (conversations.conversations.isEmpty) {
+      final conversation = await ref
+          .read(conversationsProvider.notifier)
+          .createConversation(userId);
+      setState(() {
+        _currentConversationId = conversation.id;
+      });
+    } else {
+      setState(() {
+        _currentConversationId = conversations.conversations.first.id;
+      });
     }
   }
 
@@ -524,13 +525,10 @@ class _AskAiScreenState extends ConsumerState<AskAiScreen>
 
   void _sendMessage() async {
     final message = _messageController.text.trim();
-    if (message.isEmpty) return;
+    if (message.isEmpty || _currentConversationId == null) return;
 
     _messageController.clear();
     _focusNode.unfocus();
-
-    final user = ref.read(authStateProvider).valueOrNull;
-    if (user == null || _currentConversationId == null) return;
 
     try {
       await ref
@@ -557,12 +555,13 @@ class _AskAiScreenState extends ConsumerState<AskAiScreen>
   }
 
   void _startNewConversation() async {
+    // Use Firebase user ID if available, otherwise use local guest ID
     final user = ref.read(authStateProvider).valueOrNull;
-    if (user == null) return;
+    final userId = user?.uid ?? 'local_guest_user';
 
     final conversation = await ref
         .read(conversationsProvider.notifier)
-        .createConversation(user.uid);
+        .createConversation(userId);
 
     setState(() {
       _currentConversationId = conversation.id;
