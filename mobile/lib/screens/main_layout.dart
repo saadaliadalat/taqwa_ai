@@ -8,7 +8,7 @@ import '../widgets/offline_banner.dart';
 import 'home/home_screen.dart';
 import 'ask_ai/ask_ai_screen.dart';
 import 'quran/quran_screen.dart';
-import 'community/community_screen.dart';
+
 import 'profile/profile_screen.dart';
 
 /// Tab index provider for navigation between tabs
@@ -44,11 +44,6 @@ class _MainLayoutState extends ConsumerState<MainLayout>
       icon: Icons.menu_book_outlined,
       activeIcon: Icons.menu_book_rounded,
       label: 'Quran',
-    ),
-    _NavItem(
-      icon: Icons.people_outline_rounded,
-      activeIcon: Icons.people_rounded,
-      label: 'Community',
     ),
     _NavItem(
       icon: Icons.person_outline_rounded,
@@ -130,7 +125,6 @@ class _MainLayoutState extends ConsumerState<MainLayout>
               HomeScreen(),
               AskAiScreen(),
               QuranScreen(),
-              CommunityScreen(),
               ProfileScreen(),
             ],
           ),
