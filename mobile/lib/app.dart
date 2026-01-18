@@ -7,11 +7,26 @@ import 'screens/onboarding/welcome_screen.dart';
 import 'screens/main_layout.dart';
 
 /// Root application widget
-class TaqwaAIApp extends ConsumerWidget {
+class TaqwaAIApp extends ConsumerStatefulWidget {
   const TaqwaAIApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<TaqwaAIApp> createState() => _TaqwaAIAppState();
+}
+
+class _TaqwaAIAppState extends ConsumerState<TaqwaAIApp> {
+  bool _showMainLayout = false;
+
+  void _onGetStarted() {
+    // Mark onboarding as complete and navigate to main layout
+    ref.read(settingsProvider.notifier).completeOnboarding();
+    setState(() {
+      _showMainLayout = true;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final themeMode = ref.watch(themeModeProvider);
     final settings = ref.watch(settingsProvider);
     final authState = ref.watch(authStateProvider);
@@ -47,16 +62,15 @@ class TaqwaAIApp extends ConsumerWidget {
       // Initial route determination
       home: authState.when(
         data: (user) {
-          if (!settings.onboardingComplete) {
-            return const WelcomeScreen();
-          }
-          if (user != null) {
+          // If we've already navigated via Get Started button, show main layout
+          if (_showMainLayout || settings.onboardingComplete) {
             return const MainLayout();
           }
-          return const WelcomeScreen();
+          // Show welcome screen with proper callback
+          return WelcomeScreen(onGetStarted: _onGetStarted);
         },
         loading: () => const _SplashScreen(),
-        error: (_, __) => const WelcomeScreen(),
+        error: (_, __) => WelcomeScreen(onGetStarted: _onGetStarted),
       ),
     );
   }
