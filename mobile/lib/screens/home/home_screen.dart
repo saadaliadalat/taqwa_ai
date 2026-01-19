@@ -7,6 +7,9 @@ import '../../providers/quran_provider.dart';
 import '../../models/ayah_model.dart';
 import '../../utils/helpers.dart';
 import '../main_layout.dart';
+import '../prayer/prayer_times_screen.dart';
+import '../prayer/qibla_screen.dart';
+import '../favorites/favorites_screen.dart';
 
 /// Premium Home Screen with prayer times and quick actions
 /// 
@@ -354,7 +357,10 @@ class _QuickLinksRow extends ConsumerWidget {
         label: 'Prayer Times',
         color: const Color(0xFF5C6BC0),
         onTap: () {
-          // TODO: Navigate to prayer times
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const PrayerTimesScreen()),
+          );
         },
       ),
       _QuickLink(
@@ -362,7 +368,10 @@ class _QuickLinksRow extends ConsumerWidget {
         label: 'Qibla',
         color: const Color(0xFFE57373),
         onTap: () {
-          // TODO: Navigate to qibla
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const QiblaScreen()),
+          );
         },
       ),
     ];
@@ -520,15 +529,23 @@ class _PrayerTimesCard extends StatelessWidget {
                   ],
                 ),
                 const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    'View All',
-                    style: AppTypography.labelSmall(color: Colors.white),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const PrayerTimesScreen()),
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      'View All',
+                      style: AppTypography.labelSmall(color: Colors.white),
+                    ),
                   ),
                 ),
               ],
@@ -613,13 +630,13 @@ class _PrayerTimeItem extends StatelessWidget {
 }
 
 /// Feature cards section
-class _FeatureCards extends StatelessWidget {
+class _FeatureCards extends ConsumerWidget {
   final bool isDark;
 
   const _FeatureCards({required this.isDark});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Column(
       children: [
         Row(
@@ -633,6 +650,7 @@ class _FeatureCards extends StatelessWidget {
                   colors: [Color(0xFF7C4DFF), Color(0xFF536DFE)],
                 ),
                 isDark: isDark,
+                onTap: () => ref.read(tabIndexProvider.notifier).state = 1,
               ),
             ),
             const SizedBox(width: 12),
@@ -645,6 +663,7 @@ class _FeatureCards extends StatelessWidget {
                   colors: [Color(0xFFE57373), Color(0xFFEF5350)],
                 ),
                 isDark: isDark,
+                onTap: () => ref.read(tabIndexProvider.notifier).state = 1,
               ),
             ),
           ],
@@ -654,25 +673,37 @@ class _FeatureCards extends StatelessWidget {
           children: [
             Expanded(
               child: _FeatureCard(
-                icon: Icons.school_outlined,
-                title: 'Learn',
-                subtitle: 'Islamic courses',
+                icon: Icons.bookmark_outline,
+                title: 'Saved',
+                subtitle: 'Your favorites',
                 gradient: const LinearGradient(
                   colors: [Color(0xFF4DB6AC), Color(0xFF26A69A)],
                 ),
                 isDark: isDark,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const FavoritesScreen()),
+                  );
+                },
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: _FeatureCard(
-                icon: Icons.calendar_today_outlined,
-                title: 'Calendar',
-                subtitle: 'Islamic dates',
+                icon: Icons.access_time_rounded,
+                title: 'Prayers',
+                subtitle: 'Prayer times',
                 gradient: const LinearGradient(
                   colors: [Color(0xFFFFB74D), Color(0xFFFFA726)],
                 ),
                 isDark: isDark,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const PrayerTimesScreen()),
+                  );
+                },
               ),
             ),
           ],
@@ -688,6 +719,7 @@ class _FeatureCard extends StatelessWidget {
   final String subtitle;
   final Gradient gradient;
   final bool isDark;
+  final VoidCallback? onTap;
 
   const _FeatureCard({
     required this.icon,
@@ -695,6 +727,7 @@ class _FeatureCard extends StatelessWidget {
     required this.subtitle,
     required this.gradient,
     required this.isDark,
+    this.onTap,
   });
 
   @override
@@ -715,7 +748,7 @@ class _FeatureCard extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {},
+          onTap: onTap,
           borderRadius: BorderRadius.circular(20),
           child: Padding(
             padding: const EdgeInsets.all(16),

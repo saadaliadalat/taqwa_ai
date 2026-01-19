@@ -104,6 +104,25 @@ class _MainLayoutState extends ConsumerState<MainLayout>
     final currentIndex = ref.watch(tabIndexProvider);
     final bottomPadding = MediaQuery.of(context).padding.bottom;
 
+    // Listen for external tab changes (e.g., from Quick Links on home screen)
+    ref.listen<int>(tabIndexProvider, (previous, next) {
+      if (previous != next && _pageController.hasClients) {
+        // Animate icons
+        if (previous != null && previous < _iconControllers.length) {
+          _iconControllers[previous].reverse();
+        }
+        if (next < _iconControllers.length) {
+          _iconControllers[next].forward();
+        }
+        // Animate page
+        _pageController.animateToPage(
+          next,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
+
     // Update system UI based on theme
     SystemChrome.setSystemUIOverlayStyle(
       SystemUiOverlayStyle(
